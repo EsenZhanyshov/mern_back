@@ -1,4 +1,5 @@
 import PostModel from "../models/Post.js";
+import CommentModel from "../models/Commet.js";
 
 export const getLastTags = async (req, res) => {
   try {
@@ -33,7 +34,6 @@ export const getAll = async (req, res) => {
 export const getOne = async (req, res) => {
   try {
     const postId = req.params.id;
-
     PostModel.findOneAndUpdate(
       {
         _id: postId,
@@ -150,5 +150,77 @@ export const update = async (req, res) => {
     res.status(500).json({
       message: "Не удалось обновить статью",
     });
+  }
+};
+
+export const createComment = async (req, res) => {
+  try {
+    const { postId, text } = req.body;
+
+    console.log(req.body);
+    // Создаем новый комментарий
+    const comment = new CommentModel({
+      text,
+      user: req.userId, // Предполагается, что у вас есть аутентификация пользователя и вы передаете userId в запросе
+      post: postId,
+    });
+
+    await comment.save();
+
+    res.json(comment);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Не удалось создать комментарий",
+    });
+  }
+};
+
+export const getCommentsForPost = async (req, res) => {
+  try {
+    const postId = req.params.postId;
+
+    const comments = await CommentModel.find({ post: postId })
+      .populate("user")
+      .exec();
+
+    res.json(comments);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Не удалось получить комментарии",
+    });
+  }
+};
+
+export const deleteComment = async (req, res) => {
+  try {
+    const commentId = req.params.commentId;
+
+    // Удаляем комментарий из базы данных
+    await CommentModel.findByIdAndDelete(commentId);
+
+    res.json({
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Не удалось удалить комментарий",
+    });
+  }
+};
+
+export const getLastComments = async (req, res) => {
+  try {
+    const comments = await CommentModel.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate("user")
+      .exec();
+    res.json(comments);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

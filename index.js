@@ -56,7 +56,7 @@ app.post(
 );
 app.get("/auth/me", checkAuth, UserController.getMe);
 
-app.post("/upload", checkAuth, upload.single("image"), (req, res) => {
+app.post("/upload", upload.single("image"), (req, res) => {
   res.json({
     url: `/uploads/${req.file.originalname}`,
   });
@@ -82,6 +82,21 @@ app.patch(
   handleValidationErrors,
   PostController.update
 );
+
+// Создание комментария
+app.post("/posts/:postId/comments", checkAuth, PostController.createComment);
+
+// Получение комментариев для определенного поста
+app.get("/posts/:postId/comments", PostController.getCommentsForPost);
+
+// Удаление комментария
+app.delete(
+  "/posts/:postId/comments/:commentId",
+  checkAuth,
+  PostController.deleteComment
+);
+
+app.get("/comments/last", checkAuth, PostController.getLastComments);
 
 app.listen(process.env.PORT || 4444, (err) => {
   if (err) {
